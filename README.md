@@ -38,6 +38,11 @@ Add params:
  -rect - time delay in secs between reconnection attempts. Default is 30
 ```
  
+ Requirements
+ ============
+
+ - Go 1.4 or higher
+ - Few external Go modules (yamux, go-socks5 and go-ntlmssp)
 
 Compile and Installation:
 =====
