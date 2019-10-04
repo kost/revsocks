@@ -58,7 +58,7 @@ go build
 ```
 launch:
 ```
-./revsocks -listen :8443 -socks 127.0.0.1:1080 -cert cert -pass Password1234
+./revsocks -listen :8443 -socks 127.0.0.1:1080 -pass Password1234
 ```
 
 Windows client:
