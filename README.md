@@ -72,7 +72,11 @@ go build
 optional: to build as Windows GUI: go build -ldflags -H=windowsgui
 optional: to compress exe - use any exe packer, ex: UPX
 launch:
+```
+revsocks -connect clientIP:8443 -pass Password1234
+```
 
+or with proxy and user agent:
 ```
 revsocks -connect clientIP:8443 -pass Password1234 -proxy proxy.domain.local:3128 -proxyauth Domain/userpame:userpass -useragent "Mozilla 5.0/IE Windows 10"
 ```
