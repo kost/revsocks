@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/kost/revsocks.png)](https://travis-ci.org/kost/revsocks)
+
 revsocks
 ========
 
