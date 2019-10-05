@@ -14,6 +14,8 @@ import "crypto/tls"
 
 const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
+// RandString generates random string of n size
+// It returns the generated random string.and any write error encountered.
 func RandString(n int) string {
 	r := make([]byte, n)
 	_, err := rand.Read(r)
@@ -29,6 +31,8 @@ func RandString(n int) string {
 	return string(b)
 }
 
+// RandBytes generates random bytes of n size
+// It returns the generated random bytes
 func RandBytes(n int) []byte {
 	r := make([]byte, n)
 	_, err := rand.Read(r)
@@ -38,6 +42,8 @@ func RandBytes(n int) []byte {
 	return r
 }
 
+// RandBigInt generates random big integer with max number
+// It returns the generated random big integer
 func RandBigInt(max *big.Int) *big.Int {
 	r, _ := rand.Int(rand.Reader, max)
 	return r
@@ -65,7 +71,7 @@ func genPair(keysize int) (cacert []byte, cakey []byte, cert []byte, certkey []b
 
 	priv, _ := rsa.GenerateKey(rand.Reader, keysize)
 	pub := &priv.PublicKey
-	ca_b, err := x509.CreateCertificate(rand.Reader, ca, ca, pub, priv)
+	caBin, err := x509.CreateCertificate(rand.Reader, ca, ca, pub, priv)
 	if err != nil {
 		log.Println("create ca failed", err)
 		return
@@ -86,23 +92,23 @@ func genPair(keysize int) (cacert []byte, cakey []byte, cert []byte, certkey []b
 	}
 	priv2, _ := rsa.GenerateKey(rand.Reader, keysize)
 	pub2 := &priv2.PublicKey
-	cert2_b, err2 := x509.CreateCertificate(rand.Reader, cert2, ca, pub2, priv)
+	cert2Bin, err2 := x509.CreateCertificate(rand.Reader, cert2, ca, pub2, priv)
 	if err2 != nil {
 		log.Println("create cert2 failed", err2)
 		return
 	}
 
-	priv_b := x509.MarshalPKCS1PrivateKey(priv)
-	priv2_b := x509.MarshalPKCS1PrivateKey(priv2)
+	privBin := x509.MarshalPKCS1PrivateKey(priv)
+	priv2Bin := x509.MarshalPKCS1PrivateKey(priv2)
 
-	return ca_b, priv_b, cert2_b, priv2_b
+	return caBin, privBin, cert2Bin, priv2Bin
 
 }
 
 func verifyCert(cacert []byte, cert []byte) bool {
-	ca_c, _ := x509.ParseCertificate(cacert)
-	cert2_c, _ := x509.ParseCertificate(cert)
-	err3 := cert2_c.CheckSignatureFrom(ca_c)
+	caBin, _ := x509.ParseCertificate(cacert)
+	cert2Bin, _ := x509.ParseCertificate(cert)
+	err3 := cert2Bin.CheckSignatureFrom(caBin)
 	if err3 != nil {
 		return false
 	}

@@ -166,18 +166,15 @@ func connectviaproxy(proxyaddr string, connectaddr string) net.Conn {
 		if strings.Contains(status, "HTTP/1.1 200 ") {
 			log.Print("Connected via proxy")
 			return conn
-		} else {
-			log.Printf("Not Connected via proxy. Status:%v", status)
-			return nil
 		}
+		log.Printf("Not Connected via proxy. Status:%v", status)
+		return nil
 
 	} else {
 		log.Print("Not connected via proxy")
 		conn.Close()
 		return nil
 	}
-
-	return conn
 }
 
 func connectForSocks(address string, proxy string) error {
