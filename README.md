@@ -23,7 +23,7 @@ Modes of operation
 - server = locally listening socks server
 - client = client which connects back to server 
 
-Usage:
+Usage
 ------
 ```
 Usage:
@@ -48,7 +48,7 @@ Add params:
   - Go 1.4 or higher
   - Few external Go modules (yamux, go-socks5 and go-ntlmssp)
 
-Compile and Installation:
+Compile and Installation
 =====
 
 Linux VPS
