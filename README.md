@@ -11,17 +11,17 @@ Based on https://github.com/brimstone/rsocks and https://github.com/llkat/rsocks
 Features
 ========
 
-  - Single executable (thanks to Go!)
-  - Linux/Windows/Mac/BSD support
-  - Encrypted communication with TLS
-  - Support for proxies (without authentication or with basic/NTLM proxy authentication)
-  - Automatic SSL/TLS certificate generation if not specified
+- Single executable (thanks to Go!)
+- Linux/Windows/Mac/BSD support
+- Encrypted communication with TLS
+- Support for proxies (without authentication or with basic/NTLM proxy authentication)
+- Automatic SSL/TLS certificate generation if not specified
 
 Modes of operation
 ==================
 
-  - server = locally listening socks server
-  - client = client which connects back to server 
+- server = locally listening socks server
+- client = client which connects back to server 
 
 Usage:
 ------
