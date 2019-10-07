@@ -15,7 +15,7 @@ Based on <https://github.com/brimstone/rsocks> and <https://github.com/llkat/rso
 -   Support for proxies (without authentication or with basic/NTLM proxy authentication)
 -   Automatic SSL/TLS certificate generation if not specified
 
-# Modes of operation
+# Architecture
 
 -   server = locally listening socks server
 -   client = client which connects back to server
@@ -27,6 +27,8 @@ Based on <https://github.com/brimstone/rsocks> and <https://github.com/llkat/rso
     2) Start on client: revsocks -connect clientIP:8443 -pass SuperSecretPassword
     3) Connect to 127.0.0.1:1080 on the VPS with any socks5 client.
     4) Enjoy. :]
+
+## Optional parameters
 
     Add params:
      -proxy 1.2.3.4:3128 - connect via proxy
@@ -73,9 +75,21 @@ go get github.com/kost/go-ntlmssp
 go build
 ```
 
-optional: to build as Windows GUI: go build -ldflags -H=windowsgui
-optional: to compress exe - use any exe packer, ex: UPX
-launch:
+## Windows optional
+
+optional: to build as Windows GUI:
+
+```sh
+go build -ldflags -H=windowsgui
+```
+
+You can also compress exe - just use any exe packer, ex: UPX
+
+```sh
+upx revsocks
+```
+
+## Usage examples
 
 ```sh
 revsocks -connect clientIP:8443 -pass Password1234
@@ -88,6 +102,8 @@ revsocks -connect clientIP:8443 -pass Password1234 -proxy proxy.domain.local:312
 ```
 
 Client connects to server and send agentpassword to authorize on server. If server does not receive agentpassword or reveive wrong pass from client (for example if spider or client browser connects to server ) then it send HTTP 301 redirect code to www.microsoft.com
+
+## Custom certificate
 
 Generate self-signed certificate with openssl:
 
