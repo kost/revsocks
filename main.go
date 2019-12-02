@@ -6,14 +6,12 @@ import (
 	"log"
 	"os"
 
-	"github.com/hashicorp/yamux"
 	"time"
 
 	"strconv"
 	"strings"
 )
 
-var session *yamux.Session
 var agentpassword string
 var socksdebug bool
 
@@ -73,8 +71,8 @@ func main() {
 			log.Println("No password specified. Generated password is " + agentpassword)
 		}
 
-		go listenForSocks(*listen, *certificate)
-		log.Fatal(listenForClients(*socks))
+		//listenForSocks(*listen, *certificate)
+		log.Fatal(listenForSocks(*listen, *socks, *certificate))
 	}
 
 	if *connect != "" {

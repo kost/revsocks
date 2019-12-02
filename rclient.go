@@ -177,6 +177,7 @@ func connectviaproxy(proxyaddr string, connectaddr string) net.Conn {
 }
 
 func connectForSocks(address string, proxy string) error {
+	var session *yamux.Session
 	server, err := socks5.New(&socks5.Config{})
 	if err != nil {
 		return err
@@ -234,7 +235,7 @@ func connectForSocks(address string, proxy string) error {
 
 	for {
 		stream, err := session.Accept()
-		log.Println("Acceping stream")
+		log.Println("Accepting stream")
 		if err != nil {
 			return err
 		}
