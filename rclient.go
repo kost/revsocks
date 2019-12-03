@@ -176,7 +176,7 @@ func connectviaproxy(proxyaddr string, connectaddr string) net.Conn {
 	return nil
 }
 
-func connectForSocks(address string, proxy string) error {
+func connectForSocks(tlsenable bool, address string, proxy string) error {
 	var session *yamux.Session
 	server, err := socks5.New(&socks5.Config{})
 	if err != nil {
@@ -194,8 +194,11 @@ func connectForSocks(address string, proxy string) error {
 	//var conn tls.Conn
 	if proxy == "" {
 		log.Println("Connecting to far end")
-		//conn, err = net.Dial("tcp", address)
-		conn, err = tls.Dial("tcp", address, conf)
+		if tlsenable {
+			conn, err = tls.Dial("tcp", address, conf)
+		} else {
+			conn, err = net.Dial("tcp", address)
+		}
 		if err != nil {
 			return err
 		}
@@ -204,13 +207,17 @@ func connectForSocks(address string, proxy string) error {
 		connp = connectviaproxy(proxy, address)
 		if connp != nil {
 			log.Println("Proxy successfull. Connecting to far end")
-			conntls := tls.Client(connp, conf)
-			err := conntls.Handshake()
-			if err != nil {
-				log.Printf("Error connect: %v", err)
-				return err
+			if tlsenable {
+				conntls := tls.Client(connp, conf)
+				err := conntls.Handshake()
+				if err != nil {
+					log.Printf("Error connect: %v", err)
+					return err
+				}
+				newconn = net.Conn(conntls)
+			} else {
+				newconn = connp
 			}
-			newconn = net.Conn(conntls)
 		} else {
 			log.Println("Proxy NOT successfull. Exiting")
 			return nil

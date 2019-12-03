@@ -10,19 +10,20 @@ import (
 
 	"bufio"
 	"time"
-	//"encoding/hex"
 	"github.com/hashicorp/yamux"
 	"strings"
 	"strconv"
 )
 
 var proxytout = time.Millisecond * 1000 //timeout for wait magicbytes
-// Catches yamux connecting to us
-func listenForSocks(address string, clients string, certificate string) error {
+
+// listen for agents
+func listenForSocks(tlslisten bool, address string, clients string, certificate string) error {
 	var err, erry error
 	var cer tls.Certificate
 	var session *yamux.Session
 	var sessions []*yamux.Session
+	var ln net.Listener
 
 	if certificate == "" {
 		cer, err = getRandomTLS(2048)
@@ -37,9 +38,13 @@ func listenForSocks(address string, clients string, certificate string) error {
 	log.Printf("Listening for agents on %s", address)
 	log.Printf("Will start listening for clients on %s", clients)
 	config := &tls.Config{Certificates: []tls.Certificate{cer}}
-	//ln, err := net.Listen("tcp", address)
-	ln, err := tls.Listen("tcp", address, config)
+	if tlslisten {
+		ln, err = tls.Listen("tcp", address, config)
+	} else {
+		ln, err = net.Listen("tcp", address)
+	}
 	if err != nil {
+		log.Printf("Error listening on %s: %v", address, err)
 		return err
 	}
 	var listenstr = strings.Split(clients, ":")
@@ -51,7 +56,8 @@ func listenForSocks(address string, clients string, certificate string) error {
 	for {
 		conn, err := ln.Accept()
 		conn.RemoteAddr()
-		log.Printf("Got a SSL connection from %v: ", conn.RemoteAddr())
+		agentstr:=conn.RemoteAddr().String()
+		log.Printf("[%s] Got a SSL connection from %v: ", agentstr, conn.RemoteAddr())
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Errors accepting!")
 		}
@@ -91,63 +97,71 @@ func listenForSocks(address string, clients string, certificate string) error {
 		} else {
 			//magic bytes received.
 			//disable socket read timeouts
-			log.Printf("Got Client from %s", conn.RemoteAddr())
+			log.Printf("[%s] Got Client from %s", agentstr, conn.RemoteAddr())
 			conn.SetReadDeadline(time.Now().Add(100 * time.Hour))
-			listen4clients := fmt.Sprintf("%s:%d",listenstr[0],portnum+portinc)
-			log.Printf("Built listen string %s", listen4clients)
 			//Add connection to yamux
 			session, erry = yamux.Client(conn, nil)
 			if erry != nil {
-				log.Printf("Error creating client in yamux for %s: %v", conn.RemoteAddr(), erry)
+				log.Printf("[%s] Error creating client in yamux for %s: %v", agentstr, conn.RemoteAddr(), erry)
 				continue
 			}
 			sessions=append(sessions,session)
-			go listenForClients(listen4clients, session)
+			go listenForClients(agentstr, listenstr[0], portnum+portinc, session)
 			portinc = portinc + 1
 		}
 	}
 	return nil
 }
 
-// Catches clients and connects to yamux
-func listenForClients(address string, session *yamux.Session) error {
-	log.Printf("Waiting for clients on %s", address)
-	ln, err := net.Listen("tcp", address)
-	if err != nil {
-		return err
+// Catches local clients and connects to yamux
+func listenForClients(agentstr string, listen string, port int, session *yamux.Session) error {
+	var ln net.Listener
+	var address string
+	var err error
+	portinc:=port
+	for {
+		address = fmt.Sprintf("%s:%d",listen,portinc)
+		log.Printf("[%s] Waiting for clients on %s", agentstr, address)
+		ln, err = net.Listen("tcp", address)
+		if err != nil {
+			log.Printf("[%s] Error listening on %s: %v", agentstr, address, err)
+			portinc = portinc +1
+		} else {
+			break
+		}
 	}
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
+			log.Printf("[%s] Error accepting on %s: %v", agentstr, address, err)
 			return err
 		}
-		// TODO dial socks5 through yamux and connect to conn
-
 		if session == nil {
+			log.Printf("[%s] Session on %s is nil", agentstr, address)
 			conn.Close()
 			continue
 		}
-		log.Printf("Got a client for %s", conn.RemoteAddr())
+		log.Printf("[%s] Got client. Opening stream for %s", agentstr, conn.RemoteAddr())
 
-		log.Printf("Opening a stream for %s", conn.RemoteAddr())
 		stream, err := session.Open()
 		if err != nil {
-			log.Printf("Error opening stream for %s: %v", conn.RemoteAddr(), err)
+			log.Printf("[%s] Error opening stream for %s: %v", agentstr, conn.RemoteAddr(), err)
 			return err
 		}
 
 		// connect both of conn and stream
 
 		go func() {
-			log.Printf("Starting to copy conn to stream for %s", conn.RemoteAddr())
+			log.Printf("[%s] Starting to copy conn to stream for %s", agentstr, conn.RemoteAddr())
 			io.Copy(conn, stream)
 			conn.Close()
+			log.Printf("[%s] Done copying conn to stream for %s", agentstr, conn.RemoteAddr())
 		}()
 		go func() {
-			log.Printf("Starting to copy stream to conn for %s", conn.RemoteAddr())
+			log.Printf("[%s] Starting to copy stream to conn for %s", agentstr, conn.RemoteAddr())
 			io.Copy(stream, conn)
 			stream.Close()
-			log.Printf("Done copying stream to conn for %s", conn.RemoteAddr())
+			log.Printf("[%s] Done copying stream to conn for %s", agentstr, conn.RemoteAddr())
 		}()
 	}
 }

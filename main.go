@@ -38,11 +38,9 @@ func main() {
 		flag.PrintDefaults()
 		fmt.Println("")
 		fmt.Println("Usage:")
-		fmt.Println("1) Start revsocks -listen :8080 -socks 127.0.0.1:1080 on the client.")
-		fmt.Println("2) Start revsocks -connect client:8080 on the server.")
+		fmt.Println("1) Start on the client: revsocks -listen :8080 -socks 127.0.0.1:1080 -pass test")
+		fmt.Println("2) Start on the server: revsocks -connect client:8080 -pass test")
 		fmt.Println("3) Connect to 127.0.0.1:1080 on the client with any socks5 client.")
-		fmt.Println("4) Start revsocks -connect client:8080 -proxy 1.2.3.4:3124 -proxyauth Domain/user:pass")
-		fmt.Println("X) Enjoy. :]")
 	}
 
 	flag.Parse()
@@ -72,7 +70,7 @@ func main() {
 		}
 
 		//listenForSocks(*listen, *certificate)
-		log.Fatal(listenForSocks(*listen, *socks, *certificate))
+		log.Fatal(listenForSocks(true, *listen, *socks, *certificate))
 	}
 
 	if *connect != "" {
@@ -115,7 +113,7 @@ func main() {
 		if *recn > 0 {
 			for i := 1; i <= *recn; i++ {
 				log.Printf("Connecting to the far end. Try %d of %d", i, *recn)
-				error1 := connectForSocks(*connect, *proxy)
+				error1 := connectForSocks(true, *connect, *proxy)
 				log.Print(error1)
 				log.Printf("Sleeping for %d sec...", *rect)
 				tsleep := time.Second * time.Duration(*rect)
@@ -125,7 +123,7 @@ func main() {
 		} else {
 			for {
 				log.Printf("Reconnecting to the far end... ")
-				error1 := connectForSocks(*connect, *proxy)
+				error1 := connectForSocks(true, *connect, *proxy)
 				log.Print(error1)
 				log.Printf("Sleeping for %d sec...", *rect)
 				tsleep := time.Second * time.Duration(*rect)
