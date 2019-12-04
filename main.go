@@ -70,7 +70,7 @@ func main() {
 		}
 
 		//listenForSocks(*listen, *certificate)
-		log.Fatal(listenForSocks(true, *listen, *socks, *certificate))
+		log.Fatal(listenForAgents(true, *listen, *socks, *certificate))
 	}
 
 	if *connect != "" {

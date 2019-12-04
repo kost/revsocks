@@ -18,29 +18,30 @@ import (
 var proxytout = time.Millisecond * 1000 //timeout for wait magicbytes
 
 // listen for agents
-func listenForSocks(tlslisten bool, address string, clients string, certificate string) error {
+func listenForAgents(tlslisten bool, address string, clients string, certificate string) error {
 	var err, erry error
 	var cer tls.Certificate
 	var session *yamux.Session
 	var sessions []*yamux.Session
 	var ln net.Listener
 
-	if certificate == "" {
-		cer, err = getRandomTLS(2048)
-		log.Println("No TLS certificate. Generated random one.")
-	} else {
-		cer, err = tls.LoadX509KeyPair(certificate+".crt", certificate+".key")
-	}
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	log.Printf("Listening for agents on %s", address)
 	log.Printf("Will start listening for clients on %s", clients)
-	config := &tls.Config{Certificates: []tls.Certificate{cer}}
 	if tlslisten {
+		log.Printf("Listening for agents on %s using TLS", address)
+		if certificate == "" {
+			cer, err = getRandomTLS(2048)
+			log.Println("No TLS certificate. Generated random one.")
+		} else {
+			cer, err = tls.LoadX509KeyPair(certificate+".crt", certificate+".key")
+		}
+		if err != nil {
+			log.Println(err)
+			return err
+		}
+		config := &tls.Config{Certificates: []tls.Certificate{cer}}
 		ln, err = tls.Listen("tcp", address, config)
 	} else {
+		log.Printf("Listening for agents on %s", address)
 		ln, err = net.Listen("tcp", address)
 	}
 	if err != nil {
@@ -57,7 +58,7 @@ func listenForSocks(tlslisten bool, address string, clients string, certificate 
 		conn, err := ln.Accept()
 		conn.RemoteAddr()
 		agentstr:=conn.RemoteAddr().String()
-		log.Printf("[%s] Got a SSL connection from %v: ", agentstr, conn.RemoteAddr())
+		log.Printf("[%s] Got a connection from %v: ", agentstr, conn.RemoteAddr())
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Errors accepting!")
 		}
