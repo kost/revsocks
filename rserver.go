@@ -9,10 +9,10 @@ import (
 	"os"
 
 	"bufio"
-	"time"
 	"github.com/hashicorp/yamux"
-	"strings"
 	"strconv"
+	"strings"
+	"time"
 )
 
 var proxytout = time.Millisecond * 1000 //timeout for wait magicbytes
@@ -57,7 +57,7 @@ func listenForAgents(tlslisten bool, address string, clients string, certificate
 	for {
 		conn, err := ln.Accept()
 		conn.RemoteAddr()
-		agentstr:=conn.RemoteAddr().String()
+		agentstr := conn.RemoteAddr().String()
 		log.Printf("[%s] Got a connection from %v: ", agentstr, conn.RemoteAddr())
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Errors accepting!")
@@ -106,7 +106,7 @@ func listenForAgents(tlslisten bool, address string, clients string, certificate
 				log.Printf("[%s] Error creating client in yamux for %s: %v", agentstr, conn.RemoteAddr(), erry)
 				continue
 			}
-			sessions=append(sessions,session)
+			sessions = append(sessions, session)
 			go listenForClients(agentstr, listenstr[0], portnum+portinc, session)
 			portinc = portinc + 1
 		}
@@ -119,14 +119,14 @@ func listenForClients(agentstr string, listen string, port int, session *yamux.S
 	var ln net.Listener
 	var address string
 	var err error
-	portinc:=port
+	portinc := port
 	for {
-		address = fmt.Sprintf("%s:%d",listen,portinc)
+		address = fmt.Sprintf("%s:%d", listen, portinc)
 		log.Printf("[%s] Waiting for clients on %s", agentstr, address)
 		ln, err = net.Listen("tcp", address)
 		if err != nil {
 			log.Printf("[%s] Error listening on %s: %v", agentstr, address, err)
-			portinc = portinc +1
+			portinc = portinc + 1
 		} else {
 			break
 		}
