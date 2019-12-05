@@ -1,6 +1,6 @@
 VERSION=1.1.0
 
-revsocks:
+revsocks: dep
 	go build
 
 dep:
