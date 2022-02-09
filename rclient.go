@@ -163,7 +163,8 @@ func connectviaproxy(proxyaddr string, connectaddr string) net.Conn {
 		//disable socket read timeouts
 		conn.SetReadDeadline(time.Now().Add(100 * time.Hour))
 
-		if strings.Contains(status, "HTTP/1.1 200 ") {
+		if (strings.Contains(status, "HTTP/1.1 200 ")) ||
+		(strings.Contains(status, "HTTP/1.0 200 ")) {
 			log.Print("Connected via proxy")
 			return conn
 		}
