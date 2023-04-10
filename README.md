@@ -1,4 +1,3 @@
-[![Build Status](https://travis-ci.org/kost/revsocks.png)](https://travis-ci.org/kost/revsocks)
 [![CircleCI](https://circleci.com/gh/kost/revsocks.svg?style=svg)](https://circleci.com/gh/kost/revsocks)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/3c687bcd445e4a828c914e4e2384196e)](https://www.codacy.com/manual/kost/revsocks?utm_source=github.com&utm_medium=referral&utm_content=kost/revsocks&utm_campaign=Badge_Grade)
 

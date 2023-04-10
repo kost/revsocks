@@ -8,8 +8,9 @@ dep:
 	go get
 
 tools:
-	go get github.com/mitchellh/gox
-	get github.com/tcnksm/ghr
+	go install github.com/mitchellh/gox@latest
+	go install github.com/tcnksm/ghr@latest
+
 
 ver:
 	echo version $(VERSION)
