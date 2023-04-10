@@ -49,8 +49,11 @@ Based on <https://github.com/brimstone/rsocks> and <https://github.com/llkat/rso
      -recn - reconnect times number. Default is 3. If 0 - infinite reconnection
      -rect - time delay in secs between reconnection attempts. Default is 30
 
-## Usage
+## Options
 
+Complete list of command line options
+
+```
   -cert string
 	certificate file
   -connect string
@@ -84,6 +87,7 @@ Based on <https://github.com/brimstone/rsocks> and <https://github.com/llkat/rso
 	User-Agent
   -version
 	version information
+```
 
 # Requirements
 
@@ -94,14 +98,10 @@ Based on <https://github.com/brimstone/rsocks> and <https://github.com/llkat/rso
 
 Linux VPS
 
--   install Golang: apt install golang
+-   install Golang: apt install golang make
 
 ```sh
-export GOPATH=~/go
-go get github.com/hashicorp/yamux
-go get github.com/armon/go-socks5
-go get github.com/kost/go-ntlmssp
-go build
+make
 ```
 
 launch:
@@ -115,9 +115,7 @@ Windows client:
 -   download and install golang
 
 ```sh
-go get github.com/hashicorp/yamux
-go get github.com/armon/go-socks5
-go get github.com/kost/go-ntlmssp
+go get
 go build
 ```
 
