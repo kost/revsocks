@@ -29,7 +29,7 @@ Based on <https://github.com/brimstone/rsocks> and <https://github.com/llkat/rso
     3) Connect to 127.0.0.1:1080 on the VPS with any socks5 client.
     4) Enjoy. :]
 
-### DNS tunel
+### DNS tunnel
 
 ```sh
 0) setup your domain records
