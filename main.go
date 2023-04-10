@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"io/ioutil"
 
 	"time"
 
@@ -22,10 +23,14 @@ func main() {
 	socks := flag.String("socks", "127.0.0.1:1080", "socks address:port")
 	connect := flag.String("connect", "", "connect address:port")
 	proxy := flag.String("proxy", "", "proxy address:port")
+	optdnslisten := flag.String("dnslisten", "", "Where should DNS server listen")
+	optdnsdelay := flag.String("dnsdelay", "", "Delay/sleep time between requests (200ms by default)")
+	optdnsdomain := flag.String("dns", "", "DNS domain to use for DNS tunneling")
 	optproxytimeout := flag.String("proxytimeout", "", "proxy response timeout (ms)")
 	proxyauthstring := flag.String("proxyauth", "", "proxy auth Domain/user:Password ")
 	optuseragent := flag.String("useragent", "", "User-Agent")
 	optpassword := flag.String("pass", "", "Connect password")
+	optquiet := flag.Bool("q",false,"Be quiet")
 	recn := flag.Int("recn", 3, "reconnection limit")
 
 	rect := flag.Int("rect", 30, "reconnection delay")
@@ -37,13 +42,21 @@ func main() {
 		fmt.Println("")
 		flag.PrintDefaults()
 		fmt.Println("")
-		fmt.Println("Usage:")
+		fmt.Println("Usage (standard tcp):")
 		fmt.Println("1) Start on the client: revsocks -listen :8080 -socks 127.0.0.1:1080 -pass test")
 		fmt.Println("2) Start on the server: revsocks -connect client:8080 -pass test")
 		fmt.Println("3) Connect to 127.0.0.1:1080 on the client with any socks5 client.")
+		fmt.Println("Usage (dns):")
+		fmt.Println("1) Start on the DNS server: revsocks -dns example.com -dnslisten :53 -socks 127.0.0.1:1080")
+		fmt.Println("2) Start on the target: revsocks -dns example.com -pass <paste-generated-key>")
+		fmt.Println("3) Connect to 127.0.0.1:1080 on the DNS server with any socks5 client.")
 	}
 
 	flag.Parse()
+
+	if *optquiet {
+		log.SetOutput(ioutil.Discard)
+	}
 
 	if *fsocksdebug {
 		socksdebug = true
@@ -131,6 +144,24 @@ func main() {
 			}
 		}
 
+		log.Fatal("Ending...")
+	}
+
+	if *optdnsdomain != "" {
+		dnskey:=*optpassword
+		if *optpassword == "" {
+			dnskey=GenerateKey()
+			log.Printf("No password specified, generated following (recheck if same on both sides): %s", dnskey)
+		}
+		if len(dnskey) != 64 {
+			fmt.Fprintf(os.Stderr, "Specified key of incorrect size for DNS (should be 64 in hex)\n")
+			os.Exit(1)
+		}
+		if *optdnslisten != "" {
+			ServeDNS (*optdnslisten,*optdnsdomain,*socks, dnskey, *optdnsdelay)
+		} else {
+			DnsConnectSocks(*optdnsdomain, dnskey, *optdnsdelay)
+		}
 		log.Fatal("Ending...")
 	}
 
