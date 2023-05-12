@@ -56,38 +56,40 @@ Complete list of command line options
 
 ```
   -cert string
-	certificate file
+    	certificate file
   -connect string
-	connect address:port
+    	connect address:port
   -debug
-	display debug info
+    	display debug info
   -dns string
-	DNS domain to use for DNS tunneling
+    	DNS domain to use for DNS tunneling
   -dnsdelay string
-	Delay/sleep time between requests (200ms by default)
+    	Delay/sleep time between requests (200ms by default)
   -dnslisten string
-	Where should DNS server listen
+    	Where should DNS server listen
   -listen string
-	listen port for receiver address:port
+    	listen port for receiver address:port
   -pass string
-	Connect password
+    	Connect password
   -proxy string
-	proxy address:port
+    	proxy address:port
   -proxyauth string
-	proxy auth Domain/user:Password
+    	proxy auth Domain/user:Password
   -proxytimeout string
-	proxy response timeout (ms)
+    	proxy response timeout (ms)
   -q	Be quiet
   -recn int
-	reconnection limit (default 3)
+    	reconnection limit (default 3)
   -rect int
-	reconnection delay (default 30)
+    	reconnection delay (default 30)
   -socks string
-	socks address:port (default "127.0.0.1:1080")
+    	socks address:port (default "127.0.0.1:1080")
   -useragent string
-	User-Agent
+    	User-Agent
+  -verify
+    	verify TLS connection
   -version
-	version information
+    	version information
 ```
 
 # Requirements
