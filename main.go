@@ -39,7 +39,7 @@ func main() {
 	version := flag.Bool("version", false, "version information")
 	flag.Usage = func() {
 
-		fmt.Println("revsocks - reverse socks5 server/client")
+		fmt.Printf("revsocks - reverse socks5 server/client %s (%s)", Version, CommitID)
 		fmt.Println("")
 		flag.PrintDefaults()
 		fmt.Println("")
@@ -63,7 +63,7 @@ func main() {
 		socksdebug = true
 	}
 	if *version {
-		fmt.Println("revsocks - reverse socks5 server/client")
+		fmt.Printf("revsocks - reverse socks5 server/client %s (%s)", Version, CommitID)
 		os.Exit(0)
 	}
 
