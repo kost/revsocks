@@ -35,6 +35,7 @@ func main() {
 
 	rect := flag.Int("rect", 30, "reconnection delay")
 	fsocksdebug := flag.Bool("debug", false, "display debug info")
+	verify := flag.Bool("verify", false, "verify TLS connection")
 	version := flag.Bool("version", false, "version information")
 	flag.Usage = func() {
 
@@ -126,7 +127,7 @@ func main() {
 		if *recn > 0 {
 			for i := 1; i <= *recn; i++ {
 				log.Printf("Connecting to the far end. Try %d of %d", i, *recn)
-				error1 := connectForSocks(true, *connect, *proxy)
+				error1 := connectForSocks(true, *verify, *connect, *proxy)
 				log.Print(error1)
 				log.Printf("Sleeping for %d sec...", *rect)
 				tsleep := time.Second * time.Duration(*rect)
@@ -136,7 +137,7 @@ func main() {
 		} else {
 			for {
 				log.Printf("Reconnecting to the far end... ")
-				error1 := connectForSocks(true, *connect, *proxy)
+				error1 := connectForSocks(true, *verify, *connect, *proxy)
 				log.Print(error1)
 				log.Printf("Sleeping for %d sec...", *rect)
 				tsleep := time.Second * time.Duration(*rect)

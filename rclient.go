@@ -177,7 +177,7 @@ func connectviaproxy(proxyaddr string, connectaddr string) net.Conn {
 	return nil
 }
 
-func connectForSocks(tlsenable bool, address string, proxy string) error {
+func connectForSocks(tlsenable bool, verify bool, address string, proxy string) error {
 	var session *yamux.Session
 	server, err := socks5.New(&socks5.Config{})
 	if err != nil {
@@ -185,7 +185,7 @@ func connectForSocks(tlsenable bool, address string, proxy string) error {
 	}
 
 	conf := &tls.Config{
-		InsecureSkipVerify: true,
+		InsecureSkipVerify: !verify,
 	}
 
 	var conn net.Conn
