@@ -1,4 +1,4 @@
-VERSION=2.1
+VERSION=2.2
 GIT_COMMIT = `git rev-parse HEAD | cut -c1-7`
 BUILD_OPTIONS = -ldflags "-X main.Version=$(VERSION) -X main.CommitID=$(GIT_COMMIT)"
 STATIC_OPTIONS = -ldflags "-extldflags='-static' -X main.Version=$(VERSION) -X main.CommitID=$(GIT_COMMIT)"
