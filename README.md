@@ -11,6 +11,7 @@ Based on <https://github.com/brimstone/rsocks> and <https://github.com/llkat/rso
 -   Single executable (thanks to Go!)
 -   Linux/Windows/Mac/BSD support
 -   Encrypted communication with TLS
+-   DNS tunneling support (SOCKS5 over DNS)
 -   Support for proxies (without authentication or with basic/NTLM proxy authentication)
 -   Automatic SSL/TLS certificate generation if not specified
 
