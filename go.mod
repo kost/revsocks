@@ -16,10 +16,10 @@ require (
 	github.com/kost/chashell v0.0.0-20230409212000-cf0fbd106275 // indirect
 	github.com/miekg/dns v1.1.54 // indirect
 	github.com/rs/xid v1.5.0 // indirect
-	golang.org/x/crypto v0.9.0 // indirect
+	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/mod v0.10.0 // indirect
-	golang.org/x/net v0.10.0 // indirect
-	golang.org/x/sys v0.8.0 // indirect
+	golang.org/x/net v0.17.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/tools v0.9.1 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
 )
