@@ -16,8 +16,15 @@ import (
 var agentpassword string
 var socksdebug bool
 
-func main() {
+type AppOptions struct {
+	usetls	bool
+	verify	bool
+	usewebsocket bool
+}
 
+var CurOptions AppOptions
+
+func main() {
 	listen := flag.String("listen", "", "listen port for receiver address:port")
 	certificate := flag.String("cert", "", "certificate file")
 	socks := flag.String("socks", "127.0.0.1:1080", "socks address:port")
@@ -35,8 +42,11 @@ func main() {
 
 	rect := flag.Int("rect", 30, "reconnection delay")
 	fsocksdebug := flag.Bool("debug", false, "display debug info")
+	flag.BoolVar(&CurOptions.usetls, "tls", false, "use TLS for connection")
+	flag.BoolVar(&CurOptions.usewebsocket, "ws", false, "use websocketfor connection")
 	verify := flag.Bool("verify", false, "verify TLS connection")
 	version := flag.Bool("version", false, "version information")
+
 	flag.Usage = func() {
 
 		fmt.Printf("revsocks - reverse socks5 server/client %s (%s)", Version, CommitID)
@@ -84,7 +94,11 @@ func main() {
 		}
 
 		//listenForSocks(*listen, *certificate)
-		log.Fatal(listenForAgents(true, *listen, *socks, *certificate))
+		if CurOptions.usewebsocket {
+			log.Fatal(listenForWebsocketAgents(CurOptions.usetls, *listen, *socks, *certificate))
+		} else {
+			log.Fatal(listenForAgents(CurOptions.usetls, *listen, *socks, *certificate))
+		}
 	}
 
 	if *connect != "" {
@@ -127,8 +141,12 @@ func main() {
 		if *recn > 0 {
 			for i := 1; i <= *recn; i++ {
 				log.Printf("Connecting to the far end. Try %d of %d", i, *recn)
-				error1 := connectForSocks(true, *verify, *connect, *proxy)
-				log.Print(error1)
+				if CurOptions.usewebsocket {
+					connect4proxy (*connect, *proxy)
+				} else {
+					error1 := connectForSocks(CurOptions.usetls, *verify, *connect, *proxy)
+					log.Print(error1)
+				}
 				log.Printf("Sleeping for %d sec...", *rect)
 				tsleep := time.Second * time.Duration(*rect)
 				time.Sleep(tsleep)
@@ -137,8 +155,12 @@ func main() {
 		} else {
 			for {
 				log.Printf("Reconnecting to the far end... ")
-				error1 := connectForSocks(true, *verify, *connect, *proxy)
-				log.Print(error1)
+				if CurOptions.usewebsocket {
+					connect4proxy (*connect, *proxy)
+				} else {
+					error1 := connectForSocks(true, *verify, *connect, *proxy)
+					log.Print(error1)
+				}
 				log.Printf("Sleeping for %d sec...", *rect)
 				tsleep := time.Second * time.Duration(*rect)
 				time.Sleep(tsleep)

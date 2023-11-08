@@ -13,9 +13,118 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"context"
+	"net/http"
+	"nhooyr.io/websocket"
+	"sync"
 )
 
 var proxytout = time.Millisecond * 1000 //timeout for wait magicbytes
+
+type agentHandler struct {
+	mu    sync.Mutex
+	listenstr string // listen string for clients
+	portnext int // next port for listen
+	timeout time.Duration
+	sessions []*yamux.Session // all sessions
+	// agentstr string // connecting agent combo (IP:port)
+}
+
+func (h *agentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	var session *yamux.Session
+	var erry error
+
+	agentstr := r.RemoteAddr
+	log.Printf("[%s] Got HTTP request (%s):  %s", agentstr, r.Method, r.URL.String())
+
+	if r.Header.Get("Upgrade") != "websocket" {
+		w.Header().Set("Location", "https://www.microsoft.com/")
+		w.WriteHeader(http.StatusFound) // Use 302 status code for redirect
+		// fmt.Fprintf(w, "OK")
+		return
+	}
+
+	c, err := websocket.Accept(w, r, nil)
+	if err != nil {
+		log.Printf("[%s] Error upgrading to socket (%s):  %v", agentstr, r.RemoteAddr, err)
+		http.Error(w, "Bad request - Go away!", 500)
+		return
+	}
+	defer c.CloseNow()
+
+	if h.timeout>0 {
+		_, cancel := context.WithTimeout(r.Context(), time.Second*60)
+		defer cancel()
+	}
+
+	nc_over_ws := websocket.NetConn(context.Background(), c, websocket.MessageBinary)
+
+	//Add connection to yamux
+	session, erry = yamux.Client(nc_over_ws, nil)
+	if erry != nil {
+		log.Printf("[%s] Error creating client in yamux for (%s): %v", agentstr, r.RemoteAddr, erry)
+		http.Error(w, "Bad request - Go away!", 500)
+		return
+	}
+	h.sessions = append(h.sessions, session)
+	h.mu.Lock()
+	listenport := h.portnext
+	h.portnext = h.portnext + 1
+	h.mu.Unlock()
+	listenForClients(agentstr, h.listenstr, listenport, session)
+
+	c.Close(websocket.StatusNormalClosure, "")
+}
+
+func setupHTTP (tlslisten bool, address string, clients string, certificate string) error {
+	var cer tls.Certificate
+	var err error
+	log.Printf("Will start listening for clients on %s", clients)
+	var listenstr = strings.Split(clients, ":")
+	portnum, errc := strconv.Atoi(listenstr[1])
+	if errc != nil {
+		log.Printf("Error converting listen str %s: %v", clients, errc)
+	}
+
+	aHandler := &agentHandler{
+		portnext: portnum,
+		listenstr: listenstr[0],
+	}
+	server := &http.Server{
+		Addr:    address, // e.g. ":8443"
+		Handler: aHandler,
+	}
+	if tlslisten {
+		log.Printf("Listening for websocket agents on %s using TLS", address)
+		if certificate == "" {
+			cer, err = getRandomTLS(2048)
+			log.Println("No TLS certificate. Generated random one.")
+		} else {
+			cer, err = tls.LoadX509KeyPair(certificate+".crt", certificate+".key")
+		}
+		if err != nil {
+			log.Println(err)
+			return err
+		}
+		// config := &tls.Config{Certificates: []tls.Certificate{cer}}
+		server.TLSConfig = &tls.Config{
+				Certificates: []tls.Certificate{cer},
+		}
+	}
+
+	if tlslisten {
+		err = server.ListenAndServeTLS("", "")
+	} else {
+		err = server.ListenAndServe()
+	}
+
+	return nil
+}
+
+func listenForWebsocketAgents(tlslisten bool, address string, clients string, certificate string) error {
+	return setupHTTP(tlslisten, address, clients, certificate)
+}
 
 // listen for agents
 func listenForAgents(tlslisten bool, address string, clients string, certificate string) error {

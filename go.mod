@@ -22,4 +22,5 @@ require (
 	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/tools v0.9.1 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
+	nhooyr.io/websocket v1.8.10 // indirect
 )
