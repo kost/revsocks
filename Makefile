@@ -28,13 +28,13 @@ dist:
 	mkdir -p dist
 
 gox:
-	CGO_ENABLED=0 gox -osarch="!darwin/386" ldflags="-s -w -X main.Version=$(VERSION) -X main.CommitID=$(GIT_COMMIT)" -output="dist/{{.Dir}}_{{.OS}}_{{.Arch}}"
+	CGO_ENABLED=0 gox -osarch="!darwin/386" -ldflags="-s -w -X main.Version=$(VERSION) -X main.CommitID=$(GIT_COMMIT)" -output="dist/{{.Dir}}_{{.OS}}_{{.Arch}}"
 
 goxwin:
-	CGO_ENABLED=0 gox -osarch="windows/amd64" ldflags="-s -w -X main.Version=$(VERSION) -X main.CommitID=$(GIT_COMMIT)" -output="dist/{{.Dir}}_{{.OS}}_{{.Arch}}"
+	CGO_ENABLED=0 gox -osarch="windows/amd64 windows/386" -ldflags="-s -w -X main.Version=$(VERSION) -X main.CommitID=$(GIT_COMMIT)" -output="dist/{{.Dir}}_{{.OS}}_{{.Arch}}"
 
 dokbuild:
-	docker run -it --rm -v $(PWD):/app golang:alpine /bin/sh -c 'apk add make file git && git config --global --add safe.directory /app && cd /app && make tools && make -B all && make gox && make gowwin'
+	docker run -it --rm -v $(PWD):/app golang:alpine /bin/sh -c 'apk add make file git && git config --global --add safe.directory /app && cd /app && make -B tools && make gox && make goxwin'
 
 draft:
 	ghr -draft v$(VERSION) dist/

@@ -84,8 +84,6 @@ Complete list of command line options
     	Delay/sleep time between requests (200ms by default)
   -dnslisten string
     	Where should DNS server listen
-  -envproxy
-    	get proxy information from environment
   -listen string
     	listen port for receiver address:port
   -pass string

@@ -44,7 +44,7 @@ func main() {
 
 	rect := flag.Int("rect", 30, "reconnection delay")
 	flag.BoolVar(&CurOptions.debug, "debug", false, "display debug info")
-	flag.BoolVar(&CurOptions.envproxy, "envproxy", false, "get proxy information from environment")
+	// flag.BoolVar(&CurOptions.envproxy, "envproxy", false, "get proxy information from environment")
 	flag.BoolVar(&CurOptions.usetls, "tls", false, "use TLS for connection")
 	flag.BoolVar(&CurOptions.usewebsocket, "ws", false, "use websocket for connection")
 	flag.BoolVar(&CurOptions.verify, "verify", false, "verify TLS connection")
