@@ -45,6 +45,13 @@ func (h *agentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if r.Header.Get("Accept-Language") != agentpassword {
+		w.Header().Set("Location", "https://www.microsoft.com/")
+		w.WriteHeader(http.StatusFound) // Use 302 status code for redirect
+		// fmt.Fprintf(w, "OK")
+		return
+	}
+
 	c, err := websocket.Accept(w, r, nil)
 	if err != nil {
 		log.Printf("[%s] Error upgrading to socket (%s):  %v", agentstr, r.RemoteAddr, err)
@@ -96,7 +103,6 @@ func setupHTTP (tlslisten bool, address string, clients string, certificate stri
 		Handler: aHandler,
 	}
 	if tlslisten {
-		log.Printf("Listening for websocket agents on %s using TLS", address)
 		if certificate == "" {
 			cer, err = getRandomTLS(2048)
 			log.Println("No TLS certificate. Generated random one.")
@@ -113,6 +119,7 @@ func setupHTTP (tlslisten bool, address string, clients string, certificate stri
 		}
 	}
 
+	log.Printf("Listening for websocket agents on %s (TLS: %t)", address, tlslisten)
 	if tlslisten {
 		err = server.ListenAndServeTLS("", "")
 	} else {
@@ -231,7 +238,7 @@ func listenForClients(agentstr string, listen string, port int, session *yamux.S
 	portinc := port
 	for {
 		address = fmt.Sprintf("%s:%d", listen, portinc)
-		log.Printf("[%s] Waiting for clients on %s", agentstr, address)
+		log.Printf("[%s] Handshake recognized. Waiting for clients on %s", agentstr, address)
 		ln, err = net.Listen("tcp", address)
 		if err != nil {
 			log.Printf("[%s] Error listening on %s: %v", agentstr, address, err)

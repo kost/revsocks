@@ -30,6 +30,21 @@ Based on <https://github.com/brimstone/rsocks> and <https://github.com/llkat/rso
     3) Connect to 127.0.0.1:1080 on the VPS with any socks5 client.
     4) Enjoy. :]
 
+### reverse TCP with TLS encryption
+
+    Usage:
+    1) Start on VPS: revsocks -listen :8443 -socks 127.0.0.1:1080 -pass SuperSecretPassword -tls
+    2) Start on client: revsocks -connect clientIP:8443 -pass SuperSecretPassword -tls
+    3) Connect to 127.0.0.1:1080 on the VPS with any socks5 client.
+    4) Enjoy. :]
+
+### reverse websocket with TLS encryption
+
+    Usage:
+    1) Start on VPS: `revsocks -listen :8443 -socks 127.0.0.1:1080 -pass SuperSecretPassword -tls -ws`
+    2) Start on client: `revsocks -connect https://clientIP:8443 -pass SuperSecretPassword -ws`
+    3) Connect to 127.0.0.1:1080 on the VPS with any socks5 client.
+
 ### DNS tunnel
 
 ```sh
@@ -55,10 +70,12 @@ Based on <https://github.com/brimstone/rsocks> and <https://github.com/llkat/rso
 Complete list of command line options
 
 ```
+  -agent string
+    	User agent to use (default "Mozilla/5.0 (Windows NT 6.1; Trident/7.0; rv:11.0) like Gecko")
   -cert string
     	certificate file
   -connect string
-    	connect address:port
+    	connect address:port (or https://address:port for ws)
   -debug
     	display debug info
   -dns string
@@ -67,12 +84,14 @@ Complete list of command line options
     	Delay/sleep time between requests (200ms by default)
   -dnslisten string
     	Where should DNS server listen
+  -envproxy
+    	get proxy information from environment
   -listen string
     	listen port for receiver address:port
   -pass string
     	Connect password
   -proxy string
-    	proxy address:port
+    	use proxy address:port for connecting (or http://address:port for ws)
   -proxyauth string
     	proxy auth Domain/user:Password
   -proxytimeout string
@@ -84,12 +103,14 @@ Complete list of command line options
     	reconnection delay (default 30)
   -socks string
     	socks address:port (default "127.0.0.1:1080")
-  -useragent string
-    	User-Agent
+  -tls
+    	use TLS for connection
   -verify
     	verify TLS connection
   -version
     	version information
+  -ws
+    	use websocket for connection
 ```
 
 # Requirements

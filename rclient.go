@@ -6,7 +6,8 @@ import (
 	"log"
 	"net"
 
-	"os"
+	"errors"
+
 	"context"
 	"net/url"
 
@@ -34,28 +35,32 @@ var connectproxystring string
 var useragent string
 var proxytimeout = time.Millisecond * 1000 //timeout for proxyserver response
 
-func connect4proxy(proxyaddr string, connectaddr string) {
-	verify := true
+func WSconnectForSocks(verify bool, address string, proxy string) error {
 	// Define the proxy URL and WebSocket endpoint URL
-	proxyURL := proxyaddr   // Change this to your proxy URL
-	wsURL := connectaddr // Change this to your WebSocket endpoint
+	proxyURL := proxy   // Change this to your proxy URL
+	wsURL := address // Change this to your WebSocket endpoint
 
 	server, err := socks5.New(&socks5.Config{})
 	if err != nil {
 		log.Printf("Error setting up socks server: %v", err)
-		return
+		return err
+	}
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: !verify},
+		},
 	}
 
-
+	if proxy != "" {
 	ntlmssp.NewNegotiateMessage(domain, "")
 
 	// Create an HTTP client that authenticates via NTLMSSP
 	negmsg, err := ntlmssp.NewNegotiateMessage(domain, "")
 	if err != nil {
 		log.Printf("Error getting domain negotiate message: %v", err)
-		return
+		return err
 	}
-	httpClient := &http.Client{
+	httpClient = &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: !verify},
 			Proxy: http.ProxyURL(mustParseURL(proxyURL)),
@@ -70,7 +75,7 @@ func connect4proxy(proxyaddr string, connectaddr string) {
 	req, err := http.NewRequest("GET", wsURL, nil)
 	if err != nil {
 		log.Printf("error creating http request to %s: %s\n", wsURL, err)
-		return
+		return err
 	}
 
 	req.Header.Set("User-Agent", useragent)
@@ -78,7 +83,7 @@ func connect4proxy(proxyaddr string, connectaddr string) {
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		log.Printf("error making http request to %s: %s\n", wsURL, err)
-		return
+		return err
 	}
 
 	if resp.StatusCode == 200 {
@@ -91,7 +96,7 @@ func connect4proxy(proxyaddr string, connectaddr string) {
 			challengeMessage, errb := base64.StdEncoding.DecodeString(ntlmchall)
 			if errb != nil {
 				log.Printf("Error getting base64 decode of challengde: %v", errb)
-				return
+				return errb
 			}
 			authenticateMessage, erra := ntlmssp.ProcessChallenge(challengeMessage, username, password)
 			if erra != nil {
@@ -119,21 +124,23 @@ func connect4proxy(proxyaddr string, connectaddr string) {
 			}
 		} else {
 			log.Printf("Unknown proxy challenge: %s", ntlmchall)
-			return
+			return errors.New("Unknown proxy challenge")
 		}
 	} else {
 		log.Printf("Unknown http response code: %d", resp.StatusCode)
 	}
 
+	}
+
 	// Connect to the WebSocket endpoint via the proxy
 	wconn, _, err := websocket.Dial(context.Background(), wsURL, &websocket.DialOptions{
 		HTTPClient:   httpClient,
-		HTTPHeader:   http.Header{"User-Agent": []string{useragent}, "Sec-WebSocket-Protocol": []string{"chat"}},
+		HTTPHeader:   http.Header{"User-Agent": []string{useragent}, "Accept-Language": []string{agentpassword}, "Sec-WebSocket-Protocol": []string{"chat"}},
 		Subprotocols: []string{"chat"},
 	})
 	if err != nil {
 		fmt.Println("Error connecting to the WebSocket:", err)
-		os.Exit(1)
+		return err
 	}
 	defer wconn.Close(websocket.StatusInternalError, "Connection closed")
 
@@ -142,7 +149,7 @@ func connect4proxy(proxyaddr string, connectaddr string) {
 	session, erry := yamux.Server(nc_over_ws, nil)
 	if erry != nil {
 		fmt.Println("Error creating yamux server:", err)
-		os.Exit(1)
+		return erry
 	}
 
        for {
@@ -159,6 +166,7 @@ func connect4proxy(proxyaddr string, connectaddr string) {
 			}
 		}()
 	}
+	return nil
 }
 
 func mustParseURL(u string) *url.URL {
@@ -170,6 +178,7 @@ func mustParseURL(u string) *url.URL {
 }
 
 func connectviaproxy(proxyaddr string, connectaddr string) net.Conn {
+	socksdebug := CurOptions.debug
 	connectproxystring = ""
 	if (username != "") && (password != "") && (domain != "") {
 		negotiateMessage, errn := ntlmssp.NewNegotiateMessage(domain, "")
