@@ -87,7 +87,7 @@ func WSconnectForSocks(verify bool, address string, proxy string) error {
 	}
 
 	if resp.StatusCode == 200 {
-		log.Printf("No proxy auth required. Will make standard request", resp.StatusCode)
+		log.Printf("No proxy auth required. Will make standard request")
 	} else if resp.StatusCode == 407 {
 		ntlmchall := resp.Header.Get("Proxy-Authenticate")
 		log.Printf("Got following challenge: %s", ntlmchall)
