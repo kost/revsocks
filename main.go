@@ -14,38 +14,51 @@ import (
 )
 
 var agentpassword string
-var socksdebug bool
+
+type AppOptions struct {
+	usetls	bool
+	verify	bool
+	usewebsocket bool
+	useragent string
+	envproxy bool
+	debug bool
+}
+
+var CurOptions AppOptions
 
 func main() {
-
 	listen := flag.String("listen", "", "listen port for receiver address:port")
 	certificate := flag.String("cert", "", "certificate file")
 	socks := flag.String("socks", "127.0.0.1:1080", "socks address:port")
-	connect := flag.String("connect", "", "connect address:port")
-	proxy := flag.String("proxy", "", "proxy address:port")
+	connect := flag.String("connect", "", "connect address:port (or https://address:port for ws)")
+	proxy := flag.String("proxy", "", "use proxy address:port for connecting (or http://address:port for ws)")
 	optdnslisten := flag.String("dnslisten", "", "Where should DNS server listen")
 	optdnsdelay := flag.String("dnsdelay", "", "Delay/sleep time between requests (200ms by default)")
 	optdnsdomain := flag.String("dns", "", "DNS domain to use for DNS tunneling")
 	optproxytimeout := flag.String("proxytimeout", "", "proxy response timeout (ms)")
 	proxyauthstring := flag.String("proxyauth", "", "proxy auth Domain/user:Password ")
-	optuseragent := flag.String("useragent", "", "User-Agent")
+	flag.StringVar(&CurOptions.useragent,"agent","Mozilla/5.0 (Windows NT 6.1; Trident/7.0; rv:11.0) like Gecko","User agent to use")
 	optpassword := flag.String("pass", "", "Connect password")
 	optquiet := flag.Bool("q",false,"Be quiet")
 	recn := flag.Int("recn", 3, "reconnection limit")
 
 	rect := flag.Int("rect", 30, "reconnection delay")
-	fsocksdebug := flag.Bool("debug", false, "display debug info")
-	verify := flag.Bool("verify", false, "verify TLS connection")
+	flag.BoolVar(&CurOptions.debug, "debug", false, "display debug info")
+	flag.BoolVar(&CurOptions.envproxy, "envproxy", false, "get proxy information from environment")
+	flag.BoolVar(&CurOptions.usetls, "tls", false, "use TLS for connection")
+	flag.BoolVar(&CurOptions.usewebsocket, "ws", false, "use websocket for connection")
+	flag.BoolVar(&CurOptions.verify, "verify", false, "verify TLS connection")
 	version := flag.Bool("version", false, "version information")
+
 	flag.Usage = func() {
 
-		fmt.Printf("revsocks - reverse socks5 server/client %s (%s)", Version, CommitID)
+		fmt.Printf("revsocks - reverse socks5 server/client by kost %s (%s)\n", Version, CommitID)
 		fmt.Println("")
 		flag.PrintDefaults()
 		fmt.Println("")
 		fmt.Println("Usage (standard tcp):")
-		fmt.Println("1) Start on the client: revsocks -listen :8080 -socks 127.0.0.1:1080 -pass test")
-		fmt.Println("2) Start on the server: revsocks -connect client:8080 -pass test")
+		fmt.Println("1) Start on the client: revsocks -listen :8080 -socks 127.0.0.1:1080 -pass test -tls")
+		fmt.Println("2) Start on the server: revsocks -connect client:8080 -pass test -tls")
 		fmt.Println("3) Connect to 127.0.0.1:1080 on the client with any socks5 client.")
 		fmt.Println("Usage (dns):")
 		fmt.Println("1) Start on the DNS server: revsocks -dns example.com -dnslisten :53 -socks 127.0.0.1:1080")
@@ -59,12 +72,14 @@ func main() {
 		log.SetOutput(ioutil.Discard)
 	}
 
-	if *fsocksdebug {
-		socksdebug = true
-	}
 	if *version {
 		fmt.Printf("revsocks - reverse socks5 server/client %s (%s)", Version, CommitID)
 		os.Exit(0)
+	}
+
+	if *optpassword != "" {
+		agentpassword = RandString(64)
+		log.Printf("No password specified. Generated password is %s", agentpassword)
 	}
 
 	if *listen != "" {
@@ -76,15 +91,12 @@ func main() {
 			proxytout = time.Millisecond * 1000
 		}
 
-		if *optpassword != "" {
-			agentpassword = *optpassword
-		} else {
-			agentpassword = RandString(64)
-			log.Println("No password specified. Generated password is " + agentpassword)
-		}
-
 		//listenForSocks(*listen, *certificate)
-		log.Fatal(listenForAgents(true, *listen, *socks, *certificate))
+		if CurOptions.usewebsocket {
+			log.Fatal(listenForWebsocketAgents(CurOptions.usetls, *listen, *socks, *certificate))
+		} else {
+			log.Fatal(listenForAgents(CurOptions.usetls, *listen, *socks, *certificate))
+		}
 	}
 
 	if *connect != "" {
@@ -112,23 +124,16 @@ func main() {
 			password = ""
 		}
 
-		if *optpassword != "" {
-			agentpassword = *optpassword
-		} else {
-			agentpassword = "RocksDefaultRequestRocksDefaultRequestRocksDefaultRequestRocks!!"
-		}
-
-		if *optuseragent != "" {
-			useragent = *optuseragent
-		} else {
-			useragent = "Mozilla/5.0 (Windows NT 6.1; Trident/7.0; rv:11.0) like Gecko"
-		}
 		//log.Fatal(connectForSocks(*connect,*proxy))
 		if *recn > 0 {
 			for i := 1; i <= *recn; i++ {
 				log.Printf("Connecting to the far end. Try %d of %d", i, *recn)
-				error1 := connectForSocks(true, *verify, *connect, *proxy)
-				log.Print(error1)
+				if CurOptions.usewebsocket {
+					WSconnectForSocks(CurOptions.verify, *connect, *proxy)
+				} else {
+					error1 := connectForSocks(CurOptions.usetls, CurOptions.verify, *connect, *proxy)
+					log.Print(error1)
+				}
 				log.Printf("Sleeping for %d sec...", *rect)
 				tsleep := time.Second * time.Duration(*rect)
 				time.Sleep(tsleep)
@@ -137,8 +142,12 @@ func main() {
 		} else {
 			for {
 				log.Printf("Reconnecting to the far end... ")
-				error1 := connectForSocks(true, *verify, *connect, *proxy)
-				log.Print(error1)
+				if CurOptions.usewebsocket {
+					WSconnectForSocks(CurOptions.verify, *connect, *proxy)
+				} else {
+					error1 := connectForSocks(true, CurOptions.verify, *connect, *proxy)
+					log.Print(error1)
+				}
 				log.Printf("Sleeping for %d sec...", *rect)
 				tsleep := time.Second * time.Duration(*rect)
 				time.Sleep(tsleep)
