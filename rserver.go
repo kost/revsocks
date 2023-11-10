@@ -18,6 +18,9 @@ import (
 	"net/http"
 	"nhooyr.io/websocket"
 	"sync"
+
+	"path/filepath"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 var proxytout = time.Millisecond * 1000 //timeout for wait magicbytes
@@ -84,7 +87,7 @@ func (h *agentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c.Close(websocket.StatusNormalClosure, "")
 }
 
-func setupHTTP (tlslisten bool, address string, clients string, certificate string) error {
+func listenForWebsocketAgents (tlslisten bool, address string, clients string, certificate string, autocertdomain string) error {
 	var cer tls.Certificate
 	var err error
 	log.Printf("Will start listening for clients on %s", clients)
@@ -103,19 +106,35 @@ func setupHTTP (tlslisten bool, address string, clients string, certificate stri
 		Handler: aHandler,
 	}
 	if tlslisten {
-		if certificate == "" {
-			cer, err = getRandomTLS(2048)
-			log.Println("No TLS certificate. Generated random one.")
+		if autocertdomain != "" {
+			log.Printf("Getting TLS certificate for %s", autocertdomain)
+			dirname, err := os.UserHomeDir()
+			if err != nil {
+				log.Printf("Error getting TLS certificate for %s: %v", autocertdomain, err)
+			}
+			cachepath := filepath.Join(dirname, ".revsocks-autocert")
+			m := &autocert.Manager{
+				Cache:      autocert.DirCache(cachepath),
+				Prompt:     autocert.AcceptTOS,
+				// Email:      "example@example.org",
+				HostPolicy: autocert.HostWhitelist(autocertdomain),
+			}
+			server.TLSConfig = m.TLSConfig()
 		} else {
-			cer, err = tls.LoadX509KeyPair(certificate+".crt", certificate+".key")
-		}
-		if err != nil {
-			log.Println(err)
-			return err
-		}
-		// config := &tls.Config{Certificates: []tls.Certificate{cer}}
-		server.TLSConfig = &tls.Config{
-				Certificates: []tls.Certificate{cer},
+			if certificate == "" {
+				cer, err = getRandomTLS(2048)
+				log.Println("No TLS certificate. Generated random one.")
+			} else {
+				cer, err = tls.LoadX509KeyPair(certificate+".crt", certificate+".key")
+			}
+			if err != nil {
+				log.Printf("Error creating/loading certificate file %s: %v", certificate, err)
+				return err
+			}
+			// config := &tls.Config{Certificates: []tls.Certificate{cer}}
+			server.TLSConfig = &tls.Config{
+					Certificates: []tls.Certificate{cer},
+			}
 		}
 	}
 
@@ -129,35 +148,45 @@ func setupHTTP (tlslisten bool, address string, clients string, certificate stri
 	return nil
 }
 
-func listenForWebsocketAgents(tlslisten bool, address string, clients string, certificate string) error {
-	return setupHTTP(tlslisten, address, clients, certificate)
-}
-
 // listen for agents
-func listenForAgents(tlslisten bool, address string, clients string, certificate string) error {
+func listenForAgents(tlslisten bool, address string, clients string, certificate string, autocertdomain string) error {
 	var err, erry error
 	var cer tls.Certificate
 	var session *yamux.Session
 	var sessions []*yamux.Session
 	var ln net.Listener
 
-	log.Printf("Will start listening for clients on %s", clients)
+	log.Printf("Will start listening for clients on %s and agents on %s (TLS: %t)", clients, address, tlslisten)
 	if tlslisten {
-		log.Printf("Listening for agents on %s using TLS", address)
-		if certificate == "" {
-			cer, err = getRandomTLS(2048)
-			log.Println("No TLS certificate. Generated random one.")
+		if autocertdomain != "" {
+			log.Printf("Getting TLS certificate for %s", autocertdomain)
+			dirname, err := os.UserHomeDir()
+			if err != nil {
+				log.Printf("Error getting TLS certificate for %s: %v", autocertdomain, err)
+			}
+			cachepath := filepath.Join(dirname, ".revsocks-autocert")
+			m := &autocert.Manager{
+				Cache:      autocert.DirCache(cachepath),
+				Prompt:     autocert.AcceptTOS,
+				// Email:      "example@example.org",
+				HostPolicy: autocert.HostWhitelist(autocertdomain),
+			}
+			ln, err = tls.Listen("tcp", address, m.TLSConfig())
 		} else {
-			cer, err = tls.LoadX509KeyPair(certificate+".crt", certificate+".key")
+			if certificate == "" {
+				cer, err = getRandomTLS(2048)
+				log.Println("No TLS certificate. Generated random one.")
+			} else {
+				cer, err = tls.LoadX509KeyPair(certificate+".crt", certificate+".key")
+			}
+			if err != nil {
+				log.Println(err)
+				return err
+			}
+			config := &tls.Config{Certificates: []tls.Certificate{cer}}
+			ln, err = tls.Listen("tcp", address, config)
 		}
-		if err != nil {
-			log.Println(err)
-			return err
-		}
-		config := &tls.Config{Certificates: []tls.Certificate{cer}}
-		ln, err = tls.Listen("tcp", address, config)
 	} else {
-		log.Printf("Listening for agents on %s", address)
 		ln, err = net.Listen("tcp", address)
 	}
 	if err != nil {

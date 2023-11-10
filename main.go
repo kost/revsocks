@@ -22,6 +22,7 @@ type AppOptions struct {
 	useragent string
 	envproxy bool
 	debug bool
+	autocert string
 }
 
 var CurOptions AppOptions
@@ -37,6 +38,7 @@ func main() {
 	optdnsdomain := flag.String("dns", "", "DNS domain to use for DNS tunneling")
 	optproxytimeout := flag.String("proxytimeout", "", "proxy response timeout (ms)")
 	proxyauthstring := flag.String("proxyauth", "", "proxy auth Domain/user:Password ")
+	flag.StringVar(&CurOptions.autocert,"autocert","","use domain.tld and automatically obtain TLS certificate")
 	flag.StringVar(&CurOptions.useragent,"agent","Mozilla/5.0 (Windows NT 6.1; Trident/7.0; rv:11.0) like Gecko","User agent to use")
 	optpassword := flag.String("pass", "", "Connect password")
 	optquiet := flag.Bool("q",false,"Be quiet")
@@ -93,9 +95,9 @@ func main() {
 
 		//listenForSocks(*listen, *certificate)
 		if CurOptions.usewebsocket {
-			log.Fatal(listenForWebsocketAgents(CurOptions.usetls, *listen, *socks, *certificate))
+			log.Fatal(listenForWebsocketAgents(CurOptions.usetls, *listen, *socks, *certificate, CurOptions.autocert))
 		} else {
-			log.Fatal(listenForAgents(CurOptions.usetls, *listen, *socks, *certificate))
+			log.Fatal(listenForAgents(CurOptions.usetls, *listen, *socks, *certificate, CurOptions.autocert))
 		}
 	}
 
