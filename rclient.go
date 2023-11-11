@@ -35,6 +35,20 @@ var connectproxystring string
 var useragent string
 var proxytimeout = time.Millisecond * 1000 //timeout for proxyserver response
 
+func GetSystemProxy(method string, urlstr string) (*url.URL, error) {
+	req, err := http.NewRequest(method, urlstr, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get the proxy URL from the environment
+	proxyURL, err := http.ProxyFromEnvironment(req)
+	if err != nil {
+		return nil, err
+	}
+	return proxyURL, nil
+}
+
 func WSconnectForSocks(verify bool, address string, proxy string) error {
 	// Define the proxy URL and WebSocket endpoint URL
 	proxyURL := proxy   // Change this to your proxy URL
@@ -51,7 +65,7 @@ func WSconnectForSocks(verify bool, address string, proxy string) error {
 		},
 	}
 
-	if proxy != "" {
+	if proxyURL != "" {
 	ntlmssp.NewNegotiateMessage(domain, "")
 
 	// Create an HTTP client that authenticates via NTLMSSP
@@ -60,10 +74,14 @@ func WSconnectForSocks(verify bool, address string, proxy string) error {
 		log.Printf("Error getting domain negotiate message: %v", err)
 		return err
 	}
+	tsproxy := http.ProxyURL(mustParseURL(proxyURL))
+	if proxyURL == "." {
+		tsproxy = http.ProxyFromEnvironment
+	}
 	httpClient = &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: !verify},
-			Proxy: http.ProxyURL(mustParseURL(proxyURL)),
+			Proxy: tsproxy,
 			ProxyConnectHeader: http.Header{
 				"Proxy-Authorization": []string{string(negmsg)},
 			},
@@ -105,7 +123,7 @@ func WSconnectForSocks(verify bool, address string, proxy string) error {
 			authMessage := fmt.Sprintf("NTLM %s", base64.StdEncoding.EncodeToString(authenticateMessage))
 			httpClient = &http.Client{
 				Transport: &http.Transport{
-					Proxy: http.ProxyURL(mustParseURL(proxyURL)),
+					Proxy: tsproxy,
 					ProxyConnectHeader: http.Header{
 						"Proxy-Authorization": []string{string(authMessage)},
 					},
@@ -116,7 +134,7 @@ func WSconnectForSocks(verify bool, address string, proxy string) error {
 			authMessage := fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(authCombo)))
 			httpClient = &http.Client{
 				Transport: &http.Transport{
-					Proxy: http.ProxyURL(mustParseURL(proxyURL)),
+					Proxy: tsproxy,
 					ProxyConnectHeader: http.Header{
 						"Proxy-Authorization": []string{authMessage},
 					},
@@ -177,9 +195,24 @@ func mustParseURL(u string) *url.URL {
 	return parsedURL
 }
 
-func connectviaproxy(proxyaddr string, connectaddr string) net.Conn {
+func connectviaproxy(tlsenable bool, proxyaddress string, connectaddr string) net.Conn {
+	var proxyurl *url.URL
 	socksdebug := CurOptions.debug
 	connectproxystring = ""
+
+	proxyurl = nil
+	proxyaddr := proxyaddress
+
+	if proxyaddress == "." {
+		prefixstr := "https://" // always https since CONNECT is needed
+		sysproxy, err := GetSystemProxy("POST",prefixstr+connectaddr)
+		if err != nil {
+			log.Printf("Error getting system proxy for %s: %v", prefixstr+connectaddr, err)
+			return nil
+		}
+		proxyurl = sysproxy
+		proxyaddr = sysproxy.Host
+	}
 	if (username != "") && (password != "") && (domain != "") {
 		negotiateMessage, errn := ntlmssp.NewNegotiateMessage(domain, "")
 		if errn != nil {
@@ -210,7 +243,7 @@ func connectviaproxy(proxyaddr string, connectaddr string) net.Conn {
 	conn, err := net.Dial("tcp", proxyaddr)
 	if err != nil {
 		// handle error
-		log.Printf("Error connect: %v", err)
+		log.Printf("Error connect to %s: %v", proxyaddr, err)
 	}
 	conn.Write([]byte(connectproxystring))
 
@@ -263,7 +296,20 @@ func connectviaproxy(proxyaddr string, connectaddr string) net.Conn {
 				log.Println(errb)
 				return nil
 			}
-			authenticateMessage, erra := ntlmssp.ProcessChallenge(challengeMessage, username, password)
+			user := ""
+			pass := ""
+			if proxyaddress == "." {
+				user=proxyurl.User.Username()
+				p,pset:=proxyurl.User.Password()
+				if pset {
+					pass = p
+				}
+			}
+			if (username != "") && (password != "") {
+				user = username
+				pass = password
+			}
+			authenticateMessage, erra := ntlmssp.ProcessChallenge(challengeMessage, user, pass)
 			if erra != nil {
 				log.Println("Process challenge error")
 				log.Println(erra)
@@ -283,9 +329,13 @@ func connectviaproxy(proxyaddr string, connectaddr string) net.Conn {
 				log.Print("Got Basic challenge:")
 			}
 			var authbuffer bytes.Buffer
-			authbuffer.WriteString(username)
-			authbuffer.WriteString(":")
-			authbuffer.WriteString(password)
+			if (username != "") && (password != "") {
+				authbuffer.WriteString(username)
+				authbuffer.WriteString(":")
+				authbuffer.WriteString(password)
+			} else if proxyaddress == "." {
+				authbuffer.WriteString(proxyurl.User.String())
+			}
 
 			basicauth := encBase64(authbuffer.Bytes())
 
@@ -355,7 +405,7 @@ func connectForSocks(tlsenable bool, verify bool, address string, proxy string) 
 		}
 	} else {
 		log.Println("Connecting to proxy ...")
-		connp = connectviaproxy(proxy, address)
+		connp = connectviaproxy(tlsenable, proxy, address)
 		if connp != nil {
 			log.Println("Proxy successfull. Connecting to far end")
 			if tlsenable {
