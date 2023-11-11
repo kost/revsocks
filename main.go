@@ -23,6 +23,9 @@ type AppOptions struct {
 	envproxy bool
 	debug bool
 	autocert string
+	recn int
+	rect int
+	optquiet bool
 }
 
 var CurOptions AppOptions
@@ -41,12 +44,10 @@ func main() {
 	flag.StringVar(&CurOptions.autocert,"autocert","","use domain.tld and automatically obtain TLS certificate")
 	flag.StringVar(&CurOptions.useragent,"agent","Mozilla/5.0 (Windows NT 6.1; Trident/7.0; rv:11.0) like Gecko","User agent to use")
 	optpassword := flag.String("pass", "", "Connect password")
-	optquiet := flag.Bool("q",false,"Be quiet")
-	recn := flag.Int("recn", 3, "reconnection limit")
-
-	rect := flag.Int("rect", 30, "reconnection delay")
+	flag.BoolVar(&CurOptions.optquiet,"q",false,"Be quiet - do not display output")
+	flag.IntVar(&CurOptions.recn,"recn", 3, "reconnection limit")
+	flag.IntVar(&CurOptions.rect,"rect", 30, "reconnection delay")
 	flag.BoolVar(&CurOptions.debug, "debug", false, "display debug info")
-	// flag.BoolVar(&CurOptions.envproxy, "envproxy", false, "get proxy information from environment")
 	flag.BoolVar(&CurOptions.usetls, "tls", false, "use TLS for connection")
 	flag.BoolVar(&CurOptions.usewebsocket, "ws", false, "use websocket for connection")
 	flag.BoolVar(&CurOptions.verify, "verify", false, "verify TLS connection")
@@ -70,7 +71,7 @@ func main() {
 
 	flag.Parse()
 
-	if *optquiet {
+	if CurOptions.optquiet {
 		log.SetOutput(ioutil.Discard)
 	}
 
@@ -127,17 +128,17 @@ func main() {
 		}
 
 		//log.Fatal(connectForSocks(*connect,*proxy))
-		if *recn > 0 {
-			for i := 1; i <= *recn; i++ {
-				log.Printf("Connecting to the far end. Try %d of %d", i, *recn)
+		if CurOptions.recn > 0 {
+			for i := 1; i <= CurOptions.recn; i++ {
+				log.Printf("Connecting to the far end. Try %d of %d", i, CurOptions.recn)
 				if CurOptions.usewebsocket {
 					WSconnectForSocks(CurOptions.verify, *connect, *proxy)
 				} else {
 					error1 := connectForSocks(CurOptions.usetls, CurOptions.verify, *connect, *proxy)
 					log.Print(error1)
 				}
-				log.Printf("Sleeping for %d sec...", *rect)
-				tsleep := time.Second * time.Duration(*rect)
+				log.Printf("Sleeping for %d sec...", CurOptions.rect)
+				tsleep := time.Second * time.Duration(CurOptions.rect)
 				time.Sleep(tsleep)
 			}
 
@@ -150,8 +151,8 @@ func main() {
 					error1 := connectForSocks(true, CurOptions.verify, *connect, *proxy)
 					log.Print(error1)
 				}
-				log.Printf("Sleeping for %d sec...", *rect)
-				tsleep := time.Second * time.Duration(*rect)
+				log.Printf("Sleeping for %d sec...", CurOptions.rect)
+				tsleep := time.Second * time.Duration(CurOptions.rect)
 				time.Sleep(tsleep)
 			}
 		}
