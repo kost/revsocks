@@ -3,9 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
-	"io/ioutil"
 
 	"time"
 
@@ -16,48 +16,48 @@ import (
 var agentpassword string
 
 type AppOptions struct {
-	usetls	bool
-	verify	bool
-	usewebsocket bool
-	useragent string
-	envproxy bool
-	debug bool
-	autocert string
-	recn int
-	rect int
-	optquiet bool
+	usetls          bool
+	verify          bool
+	usewebsocket    bool
+	useragent       string
+	envproxy        bool
+	debug           bool
+	autocert        string
+	recn            int
+	rect            int
+	optquiet        bool
 	proxyauthstring string
 	optproxytimeout string
-	optdnslisten string
-	optdnsdelay string
-	optdnsdomain string
-	listen string
-	certificate string
-	socks string
-	connect string
-	proxy string
-	agentpassword string
+	optdnslisten    string
+	optdnsdelay     string
+	optdnsdomain    string
+	listen          string
+	certificate     string
+	socks           string
+	connect         string
+	proxy           string
+	agentpassword   string
 }
 
 var CurOptions AppOptions
 
 func main() {
-	flag.StringVar(&CurOptions.listen,"listen", "", "listen port for receiver address:port")
-	flag.StringVar(&CurOptions.certificate,"cert", "", "certificate file")
-	flag.StringVar(&CurOptions.socks,"socks", "127.0.0.1:1080", "socks address:port")
-	flag.StringVar(&CurOptions.connect,"connect", "", "connect address:port (or https://address:port for ws)")
-	flag.StringVar(&CurOptions.proxy,"proxy", "", "use proxy address:port for connecting (or http://address:port for ws)")
-	flag.StringVar(&CurOptions.optdnslisten,"dnslisten", "", "Where should DNS server listen")
-	flag.StringVar(&CurOptions.optdnsdelay,"dnsdelay", "", "Delay/sleep time between requests (200ms by default)")
+	flag.StringVar(&CurOptions.listen, "listen", "", "listen port for receiver address:port")
+	flag.StringVar(&CurOptions.certificate, "cert", "", "certificate file")
+	flag.StringVar(&CurOptions.socks, "socks", "127.0.0.1:1080", "socks address:port")
+	flag.StringVar(&CurOptions.connect, "connect", "", "connect address:port (or https://address:port for ws)")
+	flag.StringVar(&CurOptions.proxy, "proxy", "", "use proxy address:port for connecting (or http://address:port for ws)")
+	flag.StringVar(&CurOptions.optdnslisten, "dnslisten", "", "Where should DNS server listen")
+	flag.StringVar(&CurOptions.optdnsdelay, "dnsdelay", "", "Delay/sleep time between requests (200ms by default)")
 	flag.StringVar(&CurOptions.optdnsdomain, "dns", "", "DNS domain to use for DNS tunneling")
-	flag.StringVar(&CurOptions.optproxytimeout,"proxytimeout", "", "proxy response timeout (ms)")
-	flag.StringVar(&CurOptions.proxyauthstring,"proxyauth", "", "proxy auth Domain/user:Password")
-	flag.StringVar(&CurOptions.autocert,"autocert","","use domain.tld and automatically obtain TLS certificate")
-	flag.StringVar(&CurOptions.useragent,"agent","Mozilla/5.0 (Windows NT 6.1; Trident/7.0; rv:11.0) like Gecko","User agent to use")
-	flag.StringVar(&CurOptions.agentpassword,"pass", "", "Connect password")
-	flag.BoolVar(&CurOptions.optquiet,"q",false,"Be quiet - do not display output")
-	flag.IntVar(&CurOptions.recn,"recn", 3, "reconnection limit")
-	flag.IntVar(&CurOptions.rect,"rect", 30, "reconnection delay")
+	flag.StringVar(&CurOptions.optproxytimeout, "proxytimeout", "", "proxy response timeout (ms)")
+	flag.StringVar(&CurOptions.proxyauthstring, "proxyauth", "", "proxy auth Domain/user:Password")
+	flag.StringVar(&CurOptions.autocert, "autocert", "", "use domain.tld and automatically obtain TLS certificate")
+	flag.StringVar(&CurOptions.useragent, "agent", "Mozilla/5.0 (Windows NT 6.1; Trident/7.0; rv:11.0) like Gecko", "User agent to use")
+	flag.StringVar(&CurOptions.agentpassword, "pass", "", "Connect password")
+	flag.BoolVar(&CurOptions.optquiet, "q", false, "Be quiet - do not display output")
+	flag.IntVar(&CurOptions.recn, "recn", 3, "reconnection limit")
+	flag.IntVar(&CurOptions.rect, "rect", 30, "reconnection delay")
 	flag.BoolVar(&CurOptions.debug, "debug", false, "display debug info")
 	flag.BoolVar(&CurOptions.usetls, "tls", false, "use TLS for connection")
 	flag.BoolVar(&CurOptions.usewebsocket, "ws", false, "use websocket for connection")
@@ -172,9 +172,9 @@ func main() {
 	}
 
 	if CurOptions.optdnsdomain != "" {
-		dnskey:=CurOptions.agentpassword
+		dnskey := CurOptions.agentpassword
 		if CurOptions.agentpassword == "" {
-			dnskey=GenerateKey()
+			dnskey = GenerateKey()
 			log.Printf("No password specified, generated following (recheck if same on both sides): %s", dnskey)
 		}
 		if len(dnskey) != 64 {
@@ -182,7 +182,7 @@ func main() {
 			os.Exit(1)
 		}
 		if CurOptions.optdnslisten != "" {
-			ServeDNS (CurOptions.optdnslisten,CurOptions.optdnsdomain,CurOptions.socks, dnskey, CurOptions.optdnsdelay)
+			ServeDNS(CurOptions.optdnslisten, CurOptions.optdnsdomain, CurOptions.socks, dnskey, CurOptions.optdnsdelay)
 		} else {
 			DnsConnectSocks(CurOptions.optdnsdomain, dnskey, CurOptions.optdnsdelay)
 		}

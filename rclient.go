@@ -51,8 +51,8 @@ func GetSystemProxy(method string, urlstr string) (*url.URL, error) {
 
 func WSconnectForSocks(verify bool, address string, proxy string) error {
 	// Define the proxy URL and WebSocket endpoint URL
-	proxyURL := proxy   // Change this to your proxy URL
-	wsURL := address // Change this to your WebSocket endpoint
+	proxyURL := proxy // Change this to your proxy URL
+	wsURL := address  // Change this to your WebSocket endpoint
 
 	server, err := socks5.New(&socks5.Config{})
 	if err != nil {
@@ -66,87 +66,87 @@ func WSconnectForSocks(verify bool, address string, proxy string) error {
 	}
 
 	if proxyURL != "" {
-	ntlmssp.NewNegotiateMessage(domain, "")
+		ntlmssp.NewNegotiateMessage(domain, "")
 
-	// Create an HTTP client that authenticates via NTLMSSP
-	negmsg, err := ntlmssp.NewNegotiateMessage(domain, "")
-	if err != nil {
-		log.Printf("Error getting domain negotiate message: %v", err)
-		return err
-	}
-	tsproxy := http.ProxyURL(mustParseURL(proxyURL))
-	if proxyURL == "." {
-		tsproxy = http.ProxyFromEnvironment
-	}
-	httpClient = &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: !verify},
-			Proxy: tsproxy,
-			ProxyConnectHeader: http.Header{
-				"Proxy-Authorization": []string{string(negmsg)},
+		// Create an HTTP client that authenticates via NTLMSSP
+		negmsg, err := ntlmssp.NewNegotiateMessage(domain, "")
+		if err != nil {
+			log.Printf("Error getting domain negotiate message: %v", err)
+			return err
+		}
+		tsproxy := http.ProxyURL(mustParseURL(proxyURL))
+		if proxyURL == "." {
+			tsproxy = http.ProxyFromEnvironment
+		}
+		httpClient = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: !verify},
+				Proxy:           tsproxy,
+				ProxyConnectHeader: http.Header{
+					"Proxy-Authorization": []string{string(negmsg)},
+				},
 			},
-		},
-	}
+		}
 
-	// resp, err := http.Get(wsURL)
-	// resp, err := httpClient.Get(wsURL)
-	req, err := http.NewRequest("GET", wsURL, nil)
-	if err != nil {
-		log.Printf("error creating http request to %s: %s\n", wsURL, err)
-		return err
-	}
+		// resp, err := http.Get(wsURL)
+		// resp, err := httpClient.Get(wsURL)
+		req, err := http.NewRequest("GET", wsURL, nil)
+		if err != nil {
+			log.Printf("error creating http request to %s: %s\n", wsURL, err)
+			return err
+		}
 
-	req.Header.Set("User-Agent", useragent)
+		req.Header.Set("User-Agent", useragent)
 
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		log.Printf("error making http request to %s: %s\n", wsURL, err)
-		return err
-	}
+		resp, err := httpClient.Do(req)
+		if err != nil {
+			log.Printf("error making http request to %s: %s\n", wsURL, err)
+			return err
+		}
 
-	if resp.StatusCode == 200 {
-		log.Printf("No proxy auth required. Will make standard request")
-	} else if resp.StatusCode == 407 {
-		ntlmchall := resp.Header.Get("Proxy-Authenticate")
-		log.Printf("Got following challenge: %s", ntlmchall)
-		if strings.Contains(ntlmchall, "NTLM") {
-			ntlmchall = ntlmchall[5:]
-			challengeMessage, errb := base64.StdEncoding.DecodeString(ntlmchall)
-			if errb != nil {
-				log.Printf("Error getting base64 decode of challengde: %v", errb)
-				return errb
-			}
-			authenticateMessage, erra := ntlmssp.ProcessChallenge(challengeMessage, username, password)
-			if erra != nil {
-				log.Printf("Error getting auth message for challenge: %v", erra)
-			}
-			authMessage := fmt.Sprintf("NTLM %s", base64.StdEncoding.EncodeToString(authenticateMessage))
-			httpClient = &http.Client{
-				Transport: &http.Transport{
-					Proxy: tsproxy,
-					ProxyConnectHeader: http.Header{
-						"Proxy-Authorization": []string{string(authMessage)},
+		if resp.StatusCode == 200 {
+			log.Printf("No proxy auth required. Will make standard request")
+		} else if resp.StatusCode == 407 {
+			ntlmchall := resp.Header.Get("Proxy-Authenticate")
+			log.Printf("Got following challenge: %s", ntlmchall)
+			if strings.Contains(ntlmchall, "NTLM") {
+				ntlmchall = ntlmchall[5:]
+				challengeMessage, errb := base64.StdEncoding.DecodeString(ntlmchall)
+				if errb != nil {
+					log.Printf("Error getting base64 decode of challengde: %v", errb)
+					return errb
+				}
+				authenticateMessage, erra := ntlmssp.ProcessChallenge(challengeMessage, username, password)
+				if erra != nil {
+					log.Printf("Error getting auth message for challenge: %v", erra)
+				}
+				authMessage := fmt.Sprintf("NTLM %s", base64.StdEncoding.EncodeToString(authenticateMessage))
+				httpClient = &http.Client{
+					Transport: &http.Transport{
+						Proxy: tsproxy,
+						ProxyConnectHeader: http.Header{
+							"Proxy-Authorization": []string{string(authMessage)},
+						},
 					},
-				},
-			}
-		} else if strings.Contains(ntlmchall, "Basic") {
-			authCombo := fmt.Sprintf("%s:%s", username, password)
-			authMessage := fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(authCombo)))
-			httpClient = &http.Client{
-				Transport: &http.Transport{
-					Proxy: tsproxy,
-					ProxyConnectHeader: http.Header{
-						"Proxy-Authorization": []string{authMessage},
+				}
+			} else if strings.Contains(ntlmchall, "Basic") {
+				authCombo := fmt.Sprintf("%s:%s", username, password)
+				authMessage := fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(authCombo)))
+				httpClient = &http.Client{
+					Transport: &http.Transport{
+						Proxy: tsproxy,
+						ProxyConnectHeader: http.Header{
+							"Proxy-Authorization": []string{authMessage},
+						},
 					},
-				},
+				}
+			} else {
+				log.Printf("Unknown proxy challenge: %s", ntlmchall)
+				return errors.New("Unknown proxy challenge")
 			}
 		} else {
-			log.Printf("Unknown proxy challenge: %s", ntlmchall)
-			return errors.New("Unknown proxy challenge")
+			log.Printf("Unknown http response code: %d", resp.StatusCode)
 		}
-	} else {
-		log.Printf("Unknown http response code: %d", resp.StatusCode)
-	}
 
 	}
 
@@ -170,7 +170,7 @@ func WSconnectForSocks(verify bool, address string, proxy string) error {
 		return erry
 	}
 
-       for {
+	for {
 		stream, err := session.Accept()
 		if err != nil {
 			fmt.Println("Error accepting stream:", err)
@@ -205,7 +205,7 @@ func connectviaproxy(tlsenable bool, proxyaddress string, connectaddr string) ne
 
 	if proxyaddress == "." {
 		prefixstr := "https://" // always https since CONNECT is needed
-		sysproxy, err := GetSystemProxy("POST",prefixstr+connectaddr)
+		sysproxy, err := GetSystemProxy("POST", prefixstr+connectaddr)
 		if err != nil {
 			log.Printf("Error getting system proxy for %s: %v", prefixstr+connectaddr, err)
 			return nil
@@ -299,8 +299,8 @@ func connectviaproxy(tlsenable bool, proxyaddress string, connectaddr string) ne
 			user := ""
 			pass := ""
 			if proxyaddress == "." {
-				user=proxyurl.User.Username()
-				p,pset:=proxyurl.User.Password()
+				user = proxyurl.User.Username()
+				p, pset := proxyurl.User.Password()
 				if pset {
 					pass = p
 				}
@@ -363,8 +363,8 @@ func connectviaproxy(tlsenable bool, proxyaddress string, connectaddr string) ne
 		//disable socket read timeouts
 		conn.SetReadDeadline(time.Now().Add(100 * time.Hour))
 
-		if (resp.StatusCode == 200 || strings.Contains(status, "HTTP/1.1 200 ") ||
-		strings.Contains(status, "HTTP/1.0 200 ")) {
+		if resp.StatusCode == 200 || strings.Contains(status, "HTTP/1.1 200 ") ||
+			strings.Contains(status, "HTTP/1.0 200 ") {
 			log.Print("Connected via proxy")
 			return conn
 		}

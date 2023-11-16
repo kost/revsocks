@@ -19,18 +19,18 @@ import (
 	"nhooyr.io/websocket"
 	"sync"
 
-	"path/filepath"
 	"golang.org/x/crypto/acme/autocert"
+	"path/filepath"
 )
 
 var proxytout = time.Millisecond * 1000 //timeout for wait magicbytes
 
 type agentHandler struct {
-	mu    sync.Mutex
+	mu        sync.Mutex
 	listenstr string // listen string for clients
-	portnext int // next port for listen
-	timeout time.Duration
-	sessions []*yamux.Session // all sessions
+	portnext  int    // next port for listen
+	timeout   time.Duration
+	sessions  []*yamux.Session // all sessions
 	// agentstr string // connecting agent combo (IP:port)
 }
 
@@ -63,7 +63,7 @@ func (h *agentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	defer c.CloseNow()
 
-	if h.timeout>0 {
+	if h.timeout > 0 {
 		_, cancel := context.WithTimeout(r.Context(), time.Second*60)
 		defer cancel()
 	}
@@ -87,7 +87,7 @@ func (h *agentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c.Close(websocket.StatusNormalClosure, "")
 }
 
-func listenForWebsocketAgents (tlslisten bool, address string, clients string, certificate string, autocertdomain string) error {
+func listenForWebsocketAgents(tlslisten bool, address string, clients string, certificate string, autocertdomain string) error {
 	var cer tls.Certificate
 	var err error
 	log.Printf("Will start listening for clients on %s", clients)
@@ -98,7 +98,7 @@ func listenForWebsocketAgents (tlslisten bool, address string, clients string, c
 	}
 
 	aHandler := &agentHandler{
-		portnext: portnum,
+		portnext:  portnum,
 		listenstr: listenstr[0],
 	}
 	server := &http.Server{
@@ -114,8 +114,8 @@ func listenForWebsocketAgents (tlslisten bool, address string, clients string, c
 			}
 			cachepath := filepath.Join(dirname, ".revsocks-autocert")
 			m := &autocert.Manager{
-				Cache:      autocert.DirCache(cachepath),
-				Prompt:     autocert.AcceptTOS,
+				Cache:  autocert.DirCache(cachepath),
+				Prompt: autocert.AcceptTOS,
 				// Email:      "example@example.org",
 				HostPolicy: autocert.HostWhitelist(autocertdomain),
 			}
@@ -133,7 +133,7 @@ func listenForWebsocketAgents (tlslisten bool, address string, clients string, c
 			}
 			// config := &tls.Config{Certificates: []tls.Certificate{cer}}
 			server.TLSConfig = &tls.Config{
-					Certificates: []tls.Certificate{cer},
+				Certificates: []tls.Certificate{cer},
 			}
 		}
 	}
@@ -166,8 +166,8 @@ func listenForAgents(tlslisten bool, address string, clients string, certificate
 			}
 			cachepath := filepath.Join(dirname, ".revsocks-autocert")
 			m := &autocert.Manager{
-				Cache:      autocert.DirCache(cachepath),
-				Prompt:     autocert.AcceptTOS,
+				Cache:  autocert.DirCache(cachepath),
+				Prompt: autocert.AcceptTOS,
 				// Email:      "example@example.org",
 				HostPolicy: autocert.HostWhitelist(autocertdomain),
 			}

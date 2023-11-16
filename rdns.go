@@ -18,9 +18,9 @@ func DnsConnectSocks(targetDomain string, encryptionKey string, dnsdelay string)
 		log.Printf("Error socks5.new:  %v", err)
 		return err
 	}
-	dt:=dnstun.NewDnsTunnel(targetDomain,encryptionKey)
+	dt := dnstun.NewDnsTunnel(targetDomain, encryptionKey)
 	if dnsdelay != "" {
-		err=dt.SetDnsDelay(dnsdelay)
+		err = dt.SetDnsDelay(dnsdelay)
 		if err != nil {
 			log.Printf("Error setting delay:  %v", err)
 			return err
@@ -50,21 +50,20 @@ func DnsConnectSocks(targetDomain string, encryptionKey string, dnsdelay string)
 	}
 }
 
-func ServeDNS (dnslisten string, DnsDomain string, clients string, enckey string, dnsdelay string) error {
-	dt:=dnstun.NewDnsTunnel(DnsDomain,enckey)
+func ServeDNS(dnslisten string, DnsDomain string, clients string, enckey string, dnsdelay string) error {
+	dt := dnstun.NewDnsTunnel(DnsDomain, enckey)
 	if dnsdelay != "" {
-		err:=dt.SetDnsDelay(dnsdelay)
+		err := dt.SetDnsDelay(dnsdelay)
 		if err != nil {
 			log.Printf("Error parsing DNS delay/sleep duration %s: %v", dnsdelay, err)
 			return err
 		}
 	}
 	dt.DnsServer(dnslisten, clients)
-	err:=dt.DnsServerStart()
+	err := dt.DnsServerStart()
 	if err != nil {
 		log.Printf("Error starting DNS server %s: %v", DnsDomain, err)
 		return err
 	}
 	return nil
 }
-
