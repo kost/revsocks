@@ -87,7 +87,7 @@ func main() {
 	}
 
 	if *version {
-		fmt.Printf("revsocks - reverse socks5 server/client %s (%s)", Version, CommitID)
+		fmt.Printf("revsocks - reverse socks5 server/client %s (%s)\n", Version, CommitID)
 		os.Exit(0)
 	}
 
