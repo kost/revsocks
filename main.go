@@ -96,6 +96,7 @@ func main() {
 		log.Printf("No password specified. Generated password is %s", agentpassword)
 	} else {
 		agentpassword = CurOptions.agentpassword
+	}
 
 	if CurOptions.listen != "" {
 		log.Println("Starting to listen for clients")
