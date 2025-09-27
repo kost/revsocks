@@ -94,6 +94,8 @@ func main() {
 	if CurOptions.agentpassword == "" {
 		agentpassword = RandString(64)
 		log.Printf("No password specified. Generated password is %s", agentpassword)
+	} else {
+		agentpassword = CurOptions.agentpassword
 	}
 
 	if CurOptions.listen != "" {
