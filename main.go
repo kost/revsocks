@@ -82,6 +82,20 @@ func main() {
 
 	flag.Parse()
 
+	setFlags := make(map[string]bool)
+	flag.Visit(func(f *flag.Flag) {
+		setFlags[f.Name] = true
+	})
+
+	flag.VisitAll(func(f *flag.Flag) {
+		if !setFlags[f.Name] {
+			envName := "REVSOCKS_" + strings.ToUpper(f.Name)
+			if envVal, ok := os.LookupEnv(envName); ok {
+				f.Value.Set(envVal)
+			}
+		}
+	})
+
 	if CurOptions.optquiet {
 		log.SetOutput(ioutil.Discard)
 	}

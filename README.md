@@ -66,7 +66,8 @@ Based on <https://github.com/brimstone/rsocks> and <https://github.com/llkat/rso
 
 ## Options
 
-Complete list of command line options
+Complete list of command line options. Any option can also be set via an environment variable by prefixing the option name with `REVSOCKS_` and converting it to uppercase (e.g., `-listen` becomes `REVSOCKS_LISTEN`). Command-line options have higher priority and will override environment variables.
+
 
 ```
   -agent string
