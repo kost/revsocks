@@ -10,6 +10,10 @@ dep:
 	#go get -u ./...
 	go get
 
+depupdate:
+	go get -u ./...
+	go mod tidy
+
 tools:
 	go install github.com/mitchellh/gox@latest
 	go install github.com/tcnksm/ghr@latest
