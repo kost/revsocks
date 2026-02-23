@@ -21,7 +21,7 @@ Based on <https://github.com/brimstone/rsocks> and <https://github.com/llkat/rso
 
 ## Usage
 
-### reverse TCP
+### reverse TCP (TLS is enabled by default)
 
     Usage:
     1) Start on VPS: revsocks -listen :8443 -socks 127.0.0.1:1080 -pass SuperSecretPassword
@@ -29,18 +29,18 @@ Based on <https://github.com/brimstone/rsocks> and <https://github.com/llkat/rso
     3) Connect to 127.0.0.1:1080 on the VPS with any socks5 client.
     4) Enjoy. :]
 
-### reverse TCP with TLS encryption
+### reverse TCP without TLS encryption (Plaintext)
 
     Usage:
-    1) Start on VPS: revsocks -listen :8443 -socks 127.0.0.1:1080 -pass SuperSecretPassword -tls
-    2) Start on client: revsocks -connect clientIP:8443 -pass SuperSecretPassword -tls
+    1) Start on VPS: revsocks -listen :8443 -socks 127.0.0.1:1080 -pass SuperSecretPassword -tls=false
+    2) Start on client: revsocks -connect clientIP:8443 -pass SuperSecretPassword -tls=false
     3) Connect to 127.0.0.1:1080 on the VPS with any socks5 client.
     4) Enjoy. :]
 
 ### reverse websocket with TLS encryption
 
     Usage:
-    1) Start on VPS: `revsocks -listen :8443 -socks 127.0.0.1:1080 -pass SuperSecretPassword -tls -ws`
+    1) Start on VPS: `revsocks -listen :8443 -socks 127.0.0.1:1080 -pass SuperSecretPassword -ws`
     2) Start on client: `revsocks -connect https://clientIP:8443 -pass SuperSecretPassword -ws`
     3) Connect to 127.0.0.1:1080 on the VPS with any socks5 client.
 

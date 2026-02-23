@@ -59,7 +59,7 @@ func main() {
 	flag.IntVar(&CurOptions.recn, "recn", 3, "reconnection limit")
 	flag.IntVar(&CurOptions.rect, "rect", 30, "reconnection delay")
 	flag.BoolVar(&CurOptions.debug, "debug", false, "display debug info")
-	flag.BoolVar(&CurOptions.usetls, "tls", false, "use TLS for connection")
+	flag.BoolVar(&CurOptions.usetls, "tls", true, "use TLS for connection (use -tls=false to disable)")
 	flag.BoolVar(&CurOptions.usewebsocket, "ws", false, "use websocket for connection")
 	flag.BoolVar(&CurOptions.verify, "verify", false, "verify TLS connection")
 	version := flag.Bool("version", false, "version information")
