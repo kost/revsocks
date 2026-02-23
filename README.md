@@ -113,7 +113,7 @@ Complete list of command line options. Any option can also be set via an environ
 
 # Requirements
 
--   Go 1.4 or higher
+-   Go 1.24 or higher
 -   Few external Go modules (yamux, go-socks5 and go-ntlmssp)
 
 # Compile and Installation
