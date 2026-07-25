@@ -7,7 +7,7 @@ require (
 	github.com/hashicorp/yamux v0.1.2
 	github.com/kost/dnstun v0.0.0-20230511164951-6e7f5656a900
 	github.com/kost/go-ntlmssp v0.0.0-20190601005913-a22bdd33b2a4
-	golang.org/x/crypto v0.51.0
+	golang.org/x/crypto v0.52.0
 	nhooyr.io/websocket v1.8.17
 )
 
